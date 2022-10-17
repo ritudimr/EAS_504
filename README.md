@@ -26,5 +26,7 @@
 
     2. Analyze the data and find relevant insights after cleaning and
   preprocessing the data.
+    
+    3. Build a model to predict the engagement a post will likely receive, given the time of posting, the number of upvotes, the number of comments, and other factors.
 
 Further report is available in the report folder (https://github.com/ritudimr/EAS_504/blob/main/Report/report.pdf).
