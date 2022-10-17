@@ -27,4 +27,4 @@ limited.
 2.2 Analyze the data and find relevant insights after cleaning and
 preprocessing the data.
 
-Further report is available in reports folder.
+Further report is available in the report folder (https://github.com/ritudimr/EAS_504/blob/main/Report/report.pdf).
