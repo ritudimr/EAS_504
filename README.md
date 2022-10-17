@@ -1,3 +1,0 @@
-## EAS 504 Project
-
-To be updated soon...
