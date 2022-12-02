@@ -148,7 +148,7 @@ class ModelTrainer(customtkinter.CTkToplevel):
         # select only text, subreddit, link_flair_text, distinguished, hour, day, ups, num_comments
         self.posts_ups = self.posts[self.categorical_features + self.text_features + ['ups']]
         self.posts_num_comments = self.posts[self.categorical_features + self.text_features + ['num_comments']]
-        self.tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', encoding='latin-1', ngram_range=(1, 2), stop_words='english')
+        self.tfidf = TfidfVectorizer()
         self.label_binarizer = LabelBinarizer()
 
         self.edit_textbox('Preparing Data (Upvotes)', 1, 'wait')
