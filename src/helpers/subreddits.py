@@ -1,0 +1,2 @@
+# Define Subreddit List
+SUBREDDITS = ['Python', 'datascience', 'javascript', 'linux', 'opensource', 'node', 'programming', 'computerscience', 'webdev', 'statistics', 'MachineLearning', 'compsci', 'java', 'rust', 'typescript']
