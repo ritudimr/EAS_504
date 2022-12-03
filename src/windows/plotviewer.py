@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 
 from helpers.subreddits import SUBREDDITS
 from .modeltrainer import ModelTrainer
+from .predict import Predict
 import numpy as np
 
 
@@ -49,6 +50,7 @@ class PlotViewer(customtkinter.CTk):
 
     def create_tabs(self):
         self.tabview = customtkinter.CTkTabview(self)
+        self.tabview.add("View Data / Predictions")
         self.tabview.add("Posts")
         self.tabview.add("Subscribers")
         self.tabview.add("Author Activity")
@@ -58,7 +60,6 @@ class PlotViewer(customtkinter.CTk):
         self.tabview.add("Best Time Analysis")
         self.tabview.add("Scores Boxplot")
         self.tabview.add("Scores vs Comments")
-        self.tabview.add("View Data / Predictions")
 
         fig = Figure(figsize=(12, 8), dpi=72)
         self.posts_plot = fig.add_subplot(111)
@@ -242,12 +243,45 @@ class PlotViewer(customtkinter.CTk):
             self.models_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Train Models", command=self.train_models)
             self.models_button.pack()
         else:
-            self.models_label = customtkinter.CTkLabel(self.tabview.tab("View Data / Predictions"), text="Models found. Predict by entering data on the next screen.", pady= 10)
-            self.models_label.pack()
-            self.models_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict")
-            self.models_button.pack()
+            self.show_model_options()
 
         self.tabview.pack(expand=True, fill='both')
+
+    def show_model_options(self):
+        models = [
+            'DummyRegressor',
+            'LinearRegression',
+            'RidgeCV',
+            'KNeighborsRegressor',
+            'DecisionTreeRegressor',
+            'RandomForestRegressor',
+            'GradientBoostingRegressor',
+        ]
+        self.model = customtkinter.CTkComboBox(self.tabview.tab("View Data / Predictions"), values=models)
+        self.model.pack(pady=10, padx=10, side=tkinter.LEFT)
+
+        # metrics buttons
+        self.ups_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Ups Metrics")
+        self.ups_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
+
+        self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Num Comments Metrics")
+        self.num_comments_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
+
+        # button for model plots
+        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Model Plots")
+        self.model_plots_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
+
+        # button for predicting
+        self.predict_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict a new post", command=self.predict)
+        self.predict_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
+
+
+    def predict(self):
+        # child window to take input of the post - title, selftext, subreddit, day, hour, distinguished
+        pred_win = Predict(self)
+        self.wait_window(pred_win)
+        
+
 
     def train_models(self):
         # open model training child window
@@ -258,9 +292,6 @@ class PlotViewer(customtkinter.CTk):
 
         self.models_label.destroy()
         self.models_button.destroy()
-        self.models_label = customtkinter.CTkLabel(self.tabview.tab("View Data / Predictions"), text="Models found. Predict by entering data on the next screen.", pady= 10)
-        self.models_label.pack()
-        self.models_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict")
-        self.models_button.pack()
+        self.show_model_options()
 
 
