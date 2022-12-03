@@ -56,7 +56,11 @@ class DataDownloader:
         self.headers = {**headers, **{'Authorization': f"bearer {self.token}"}}
 
     def on_closing(self):
-        pass
+        if self.downloaded < self.posts_per_subreddit * len(self.subreddits):
+            if tkinter.messagebox.askokcancel('Quit', 'Are you sure you want to quit?'):
+                self.root.destroy()
+        else:
+            self.root.destroy()
 
     def download(self):
         for subreddit in self.subreddits:
