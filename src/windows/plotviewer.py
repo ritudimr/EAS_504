@@ -50,6 +50,7 @@ class PlotViewer(customtkinter.CTk):
 
     def create_tabs(self):
         self.tabview = customtkinter.CTkTabview(self)
+        self.tabview.add("View Data / Predictions")
         self.tabview.add("Posts")
         self.tabview.add("Subscribers")
         self.tabview.add("Author Activity")
@@ -59,7 +60,6 @@ class PlotViewer(customtkinter.CTk):
         self.tabview.add("Best Time Analysis")
         self.tabview.add("Scores Boxplot")
         self.tabview.add("Scores vs Comments")
-        self.tabview.add("View Data / Predictions")
 
         fig = Figure(figsize=(12, 8), dpi=72)
         self.posts_plot = fig.add_subplot(111)
@@ -266,6 +266,10 @@ class PlotViewer(customtkinter.CTk):
 
         self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Num Comments Metrics")
         self.num_comments_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
+
+        # button for model plots
+        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Model Plots")
+        self.model_plots_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
 
         # button for predicting
         self.predict_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict a new post", command=self.predict)

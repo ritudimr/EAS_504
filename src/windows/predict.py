@@ -1,3 +1,5 @@
+import random
+import math
 import customtkinter
 import tkinter
 import pandas as pd
@@ -111,6 +113,8 @@ class Predict(customtkinter.CTkToplevel):
         ups = int(ups_model.predict(postX)[0])
         num_comments = int(num_comments_model.predict(postX)[0])
 
+        # random bias from the prediction
+        ups = int(ups // math.log(ups + 1))
+        num_comments = int(num_comments // math.log(num_comments + 1))
+
         tkinter.messagebox.showinfo('Predictions', 'Predicted ups: {}\nPredicted num_comments: {}'.format(ups, num_comments))
-
-
