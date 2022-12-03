@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 from helpers.subreddits import SUBREDDITS
 from .modeltrainer import ModelTrainer
 from .predict import Predict
+from .modelplots import ModelPlots
 import numpy as np
 
 
@@ -257,32 +258,46 @@ class PlotViewer(customtkinter.CTk):
             'RandomForestRegressor',
             'GradientBoostingRegressor',
         ]
-        self.model = customtkinter.CTkComboBox(self.tabview.tab("View Data / Predictions"), values=models)
+        self.model = customtkinter.CTkOptionMenu(self.tabview.tab("View Data / Predictions"), values=models)
         self.model.pack(pady=10, padx=10, side=tkinter.LEFT)
+        self.model.set('DummyRegressor')
 
         # metrics buttons
-        self.ups_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Ups Metrics")
+        self.ups_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Ups Metrics", command=self.ups_metrics)
         self.ups_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
 
-        self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Num Comments Metrics")
+        self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Num Comments Metrics", command=self.num_comments_metrics)
         self.num_comments_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
 
         # button for model plots
-        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Model Plots")
+        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Model Plots", command=self.show_model_plots)
         self.model_plots_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
 
         # button for predicting
         self.predict_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict a new post", command=self.predict)
         self.predict_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
 
+    def ups_metrics(self):
+        import json
+        selected_model = self.model.get()
+        with open(f'models/ups_metrics.json', 'r') as f:
+            metrics = json.load(f)
+        metrics = metrics[selected_model]
+        tkinter.messagebox.showinfo("Ups Metrics for {selected_model}", f"Mean Absolute Error: {metrics['mae']}" + "\n\n" + f"Mean Squared Error: {metrics['mse']}" + "\n\n" + f"Root Mean Squared Error: {metrics['rmse']}" + "\n\n" + f"R2 Score: {metrics['r2']}")
+
+    def num_comments_metrics(self):
+        import json
+        selected_model = self.model.get()
+        with open(f'models/num_comments_metrics.json', 'r') as f:
+            metrics = json.load(f)
+        metrics = metrics[selected_model]
+        tkinter.messagebox.showinfo("Num Comments Metrics for {selected_model}", f"Mean Absolute Error: {metrics['mae']}" + "\n\n" + f"Mean Squared Error: {metrics['mse']}" + "\n\n" + f"Root Mean Squared Error: {metrics['rmse']}" + "\n\n" + f"R2 Score: {metrics['r2']}")
 
     def predict(self):
         # child window to take input of the post - title, selftext, subreddit, day, hour, distinguished
         pred_win = Predict(self)
         self.wait_window(pred_win)
         
-
-
     def train_models(self):
         # open model training child window
         mt = ModelTrainer(self, self.posts)
@@ -294,4 +309,8 @@ class PlotViewer(customtkinter.CTk):
         self.models_button.destroy()
         self.show_model_options()
 
-
+    def show_model_plots(self):
+        pw = ModelPlots(self)
+        pw.grab_set()
+        pw.focus_set()
+        self.wait_window(pw)
