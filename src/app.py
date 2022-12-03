@@ -20,6 +20,8 @@ if DatabaseHandler().read().empty:
     if response:
         posts = fetch_data()
         # ask if user wants to save the data
+        root = tkinter.Tk()
+        root.withdraw()
         response = tkinter.messagebox.askokcancel('Save Data', 'Do you want to save the data for future use?', icon='warning')
         posts = pd.DataFrame(posts)
         posts = Preprocessor(posts).get_preprocessed_data()

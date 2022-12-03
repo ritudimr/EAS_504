@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 class Preprocessor:
     def __init__(self, dataframe):
         self.df = dataframe
