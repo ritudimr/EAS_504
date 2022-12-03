@@ -12,6 +12,8 @@ from scipy.sparse import hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelBinarizer
 import ssl
+import json
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -123,6 +125,8 @@ class ModelTrainer(customtkinter.CTkToplevel):
             "RandomForestRegressor": RandomForestRegressor(n_jobs=-1, n_estimators=70, min_samples_leaf=10, random_state = 10),
             "GradientBoostingRegressor": GradientBoostingRegressor(n_estimators=70, max_depth=5)
         }
+        self.ups_dict = {}
+        self.num_comments_dict = {}
 
         self.start()
 
@@ -207,14 +211,49 @@ class ModelTrainer(customtkinter.CTkToplevel):
             self.edit_textbox('Training {} for Upvotes'.format(model_name), line_count, 'wait')
             model.fit(self.X_train_ups, self.y_train_ups)
             self.save_model(model, model_name + '_ups')
+
+            ups_y_pred = model.predict(self.X_test_ups)
+            ups_mse = mean_squared_error(self.y_test_ups, ups_y_pred)
+            ups_mae = mean_absolute_error(self.y_test_ups, ups_y_pred)
+            ups_r2 = r2_score(self.y_test_ups, ups_y_pred)
+            self.ups_dict[model_name] = {
+                'mse': ups_mse,
+                'mae': ups_mae,
+                'r2': ups_r2,
+                'rmse': np.sqrt(ups_mse),
+                'pred': list(ups_y_pred),
+                'actual': list(self.y_test_ups)
+            }
+
             self.edit_textbox('Training {} for Upvotes'.format(model_name), line_count, 'done')
             line_count += 1
 
             self.edit_textbox('Training {} for Number of Comments'.format(model_name), line_count, 'wait')
             model.fit(self.X_train_num_comments, self.y_train_num_comments)
             self.save_model(model, model_name + '_num_comments')
+
+            num_comments_y_pred = model.predict(self.X_test_num_comments)
+            num_comments_mse = mean_squared_error(self.y_test_num_comments, num_comments_y_pred)
+            num_comments_mae = mean_absolute_error(self.y_test_num_comments, num_comments_y_pred)
+            num_comments_r2 = r2_score(self.y_test_num_comments, num_comments_y_pred)
+            self.num_comments_dict[model_name] = {
+                'mse': num_comments_mse,
+                'mae': num_comments_mae,
+                'r2': num_comments_r2,
+                'rmse': np.sqrt(num_comments_mse),
+                'pred': list(num_comments_y_pred),
+                'actual': list(self.y_test_num_comments)
+            }
+
             self.edit_textbox('Training {} for Number of Comments'.format(model_name), line_count, 'done')
             line_count += 1
+
+        # save the metrics
+        with open(self.model_dir + 'ups_metrics.json', 'w') as f:
+            json.dump(self.ups_dict, f)
+
+        with open(self.model_dir + 'num_comments_metrics.json', 'w') as f:
+            json.dump(self.num_comments_dict, f)
 
         self.edit_textbox('Training Complete. Models saved to models/ directory. You may now close this window.', line_count, 'done')
 

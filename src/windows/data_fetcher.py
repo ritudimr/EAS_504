@@ -27,7 +27,7 @@ class DataDownloader:
         self.root.resizable(False, False)
         self.root.protocol('WM_DELETE_WINDOW', self.on_closing)
         self.subreddits = SUBREDDITS
-        self.posts_per_subreddit = 100
+        self.posts_per_subreddit = 1000
         
         self.progress = ttk.Progressbar(self.root, orient='horizontal', length=500, mode='determinate')
         self.progress['value'] = 0
@@ -56,7 +56,7 @@ class DataDownloader:
         self.headers = {**headers, **{'Authorization': f"bearer {self.token}"}}
 
     def on_closing(self):
-        self.root.destroy()
+        pass
 
     def download(self):
         for subreddit in self.subreddits:
