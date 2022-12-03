@@ -15,18 +15,13 @@ def fetch_data():
     return downloader.posts
 
 if DatabaseHandler().read().empty:
-    # show a message box
-    response = tkinter.messagebox.askokcancel('No Data Found', 'No data found in database. Do you want to fetch data from Reddit?', icon='warning')
+    posts = fetch_data()
+    # ask if user wants to save the data
+    response = tkinter.messagebox.askokcancel('Save Data', 'Do you want to save the data for future use?', icon='warning')
+    posts = pd.DataFrame(posts)
+    posts = Preprocessor(posts).get_preprocessed_data()
     if response:
-        posts = fetch_data()
-        # ask if user wants to save the data
-        root = tkinter.Tk()
-        root.withdraw()
-        response = tkinter.messagebox.askokcancel('Save Data', 'Do you want to save the data for future use?', icon='warning')
-        posts = pd.DataFrame(posts)
-        posts = Preprocessor(posts).get_preprocessed_data()
-        if response:
-            DatabaseHandler().write(posts)
+        DatabaseHandler().write(posts)
 else:
     posts = DatabaseHandler().read()
 
