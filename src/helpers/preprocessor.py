@@ -33,7 +33,7 @@ class Preprocessor:
                 self.df[col] = self.df[col].astype(str)
 
         # Check for title duplicates
-        print('Duplicate titles: {}'.format(self.df['title'].duplicated().sum()))
+        # print('Duplicate titles: {}'.format(self.df['title'].duplicated().sum()))
 
         # Same post data can be repeated from the API -Delete titles that appear more than once
         self.df.drop_duplicates(subset=['title'], keep='first', inplace=True)

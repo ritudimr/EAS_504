@@ -127,7 +127,6 @@ class Predict(customtkinter.CTkToplevel):
 
         ups_bias = ups_best_time / ups
 
-        print(ups, ups_bias)
         num_comments_bias = num_comments_best_time / num_comments
 
         ups = ups * ups_bias
