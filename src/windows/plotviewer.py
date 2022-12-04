@@ -51,7 +51,7 @@ class PlotViewer(customtkinter.CTk):
 
     def create_tabs(self):
         self.tabview = customtkinter.CTkTabview(self)
-        self.tabview.add("View Data / Predictions")
+        self.tabview.add("View Data")
         self.tabview.add("Posts")
         self.tabview.add("Subscribers")
         self.tabview.add("Author Activity")
@@ -61,6 +61,7 @@ class PlotViewer(customtkinter.CTk):
         self.tabview.add("Best Time Analysis")
         self.tabview.add("Scores Boxplot")
         self.tabview.add("Scores vs Comments")
+        self.tabview.add("Awards Per Subreddit")
 
         fig = Figure(figsize=(12, 8), dpi=72)
         self.posts_plot = fig.add_subplot(111)
@@ -217,10 +218,23 @@ class PlotViewer(customtkinter.CTk):
         self.scores_comments_plot.figure.tight_layout()
         self.scores_comments_plot.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
+        # plot total_awards_received per subreddit
+        fig, ax = plt.subplots(5,3, figsize=(20, 20), dpi=24)
+        fig.suptitle('Total Awards Received vs Upvotes per Subreddit\n', fontsize=20)
+        for i, subreddit in enumerate(self.posts['subreddit'].unique()):
+            sns.regplot(x='score', y='total_awards_received', data=self.posts[self.posts['subreddit'] == subreddit], ax=ax[i//3, i%3])
+            ax[i//3, i%3].set_title(subreddit)
+            ax[i//3, i%3].set_xlabel('Total Awards Received')
+            ax[i//3, i%3].set_ylabel('Upvotes')
+        plt.tight_layout()
+        self.awards_plot = FigureCanvasTkAgg(fig, self.tabview.tab("Awards Per Subreddit"))
+        self.awards_plot.figure.tight_layout()
+        self.awards_plot.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        # View Data / Predictions tab
+
+        # View Data tab
         # show the posts dataframe in a table
-        self.posts_table = ttk.Treeview(self.tabview.tab("View Data / Predictions"))
+        self.posts_table = ttk.Treeview(self.tabview.tab("View Data"))
         self.posts_table.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
         self.posts_table['columns'] = list(self.posts.columns)
         for column in self.posts_table['columns']:
@@ -239,9 +253,9 @@ class PlotViewer(customtkinter.CTk):
                 os.mkdir('models')
             except:
                 pass
-            self.models_label = customtkinter.CTkLabel(self.tabview.tab("View Data / Predictions"), text="No models found. Please train the models first.", pady= 10)
+            self.models_label = customtkinter.CTkLabel(self.tabview.tab("View Data"), text="No models found. Please train the models first.", pady= 10)
             self.models_label.pack()
-            self.models_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Train Models", command=self.train_models)
+            self.models_button = customtkinter.CTkButton(self.tabview.tab("View Data"), text="Train Models", command=self.train_models)
             self.models_button.pack()
         else:
             self.show_model_options()
@@ -258,23 +272,23 @@ class PlotViewer(customtkinter.CTk):
             'RandomForestRegressor',
             'GradientBoostingRegressor',
         ]
-        self.model = customtkinter.CTkOptionMenu(self.tabview.tab("View Data / Predictions"), values=models)
+        self.model = customtkinter.CTkOptionMenu(self.tabview.tab("View Data"), values=models)
         self.model.pack(pady=10, padx=10, side=tkinter.LEFT)
         self.model.set('DummyRegressor')
 
         # metrics buttons
-        self.ups_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Ups Metrics", command=self.ups_metrics)
+        self.ups_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data"), text="Ups Metrics", command=self.ups_metrics)
         self.ups_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
 
-        self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Num Comments Metrics", command=self.num_comments_metrics)
+        self.num_comments_metrics_button = customtkinter.CTkButton(self.tabview.tab("View Data"), text="Num Comments Metrics", command=self.num_comments_metrics)
         self.num_comments_metrics_button.pack(pady=10, padx=10, side=tkinter.LEFT)
 
         # button for model plots
-        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Model Plots", command=self.show_model_plots)
+        self.model_plots_button = customtkinter.CTkButton(self.tabview.tab("View Data"), text="Model Plots", command=self.show_model_plots)
         self.model_plots_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
 
         # button for predicting
-        self.predict_button = customtkinter.CTkButton(self.tabview.tab("View Data / Predictions"), text="Predict a new post", command=self.predict)
+        self.predict_button = customtkinter.CTkButton(self.tabview.tab("View Data"), text="Predict a new post", command=self.predict)
         self.predict_button.pack(pady=10, padx=10, side=tkinter.RIGHT)
 
     def ups_metrics(self):
