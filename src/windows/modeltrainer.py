@@ -8,9 +8,7 @@ import customtkinter
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
-from scipy.sparse import hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import LabelBinarizer
 import ssl
 import json
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
@@ -26,6 +24,7 @@ warnings.filterwarnings('ignore')
 nltk.download('stopwords')
 nltk.download('wordnet')
 from string import punctuation
+import pandas as pd
 
 import numpy as np
 from sklearn.dummy import DummyRegressor
@@ -41,7 +40,6 @@ def preprocess(message):
     stuff_to_be_removed = list(stopwords.words('english'))+list(punctuation)
 
     # Convert message to lower case 
-    message = str(message)
     message = message.lower()
     
     # Remove all the links from the messages 
@@ -102,7 +100,15 @@ class ModelTrainer(customtkinter.CTkToplevel):
         
         self.categorical_features = ['subreddit', 'distinguished', 'hour', 'day']
         self.posts['text'] = self.posts['title'] + ' ' + self.posts['selftext']
+        self.posts['text'] = self.posts['text'].astype(str)
         self.posts['text'] = self.posts['text'].apply(lambda x: preprocess(x))
+        self.posts.drop(['title', 'selftext'], axis=1, inplace=True)
+
+        # convert categorical features
+        for col in self.categorical_features:
+            self.posts[col] = self.posts[col].astype('category')
+
+        self.posts = pd.get_dummies(self.posts, columns=self.categorical_features)
 
         self.text_features = ['text']
         self.title('Reddit Data Analysis - Building Models')
@@ -154,41 +160,25 @@ class ModelTrainer(customtkinter.CTkToplevel):
 
 
     def start(self):
-        self.ups = self.posts['ups']
-        self.num_comments = self.posts['num_comments']
-
-        # select only text, subreddit, link_flair_text, distinguished, hour, day, ups, num_comments
-        self.posts_ups = self.posts[self.categorical_features + self.text_features + ['ups']]
-        self.posts_num_comments = self.posts[self.categorical_features + self.text_features + ['num_comments']]
         self.tfidf = TfidfVectorizer()
-        self.label_binarizer = LabelBinarizer()
+        self.X = self.tfidf.fit_transform(self.posts['text'])
 
         self.edit_textbox('Preparing Data (Upvotes)', 1, 'wait')
-        
-        # generate tfidf - label_binarizer for ups
-        self.tfidf_ups = self.tfidf.fit_transform(self.posts_ups['text'])
-        self.category_ups = [self.label_binarizer.fit_transform(self.posts_ups[col]) for col in self.categorical_features]
-        self.category_ups = np.concatenate(self.category_ups, axis=1)
-        self.X_ups = hstack([self.tfidf_ups, self.category_ups])
-        self.y_ups = self.posts_ups['ups']
+        # dataframes for ups
+        self.ups_df = self.posts.drop(['num_comments'], axis=1)
 
-        # split data into train and test sets
-        self.X_train_ups, self.X_test_ups, self.y_train_ups, self.y_test_ups = train_test_split(self.X_ups, self.y_ups, test_size=0.2, random_state=42)
+        # split data into train and test sets for ups
+        self.X_train_ups, self.X_test_ups, self.y_train_ups, self.y_test_ups = train_test_split(self.X, self.ups_df['ups'], test_size=0.2, random_state=10)
 
         self.edit_textbox('Preparing Data (Upvotes)', 1, 'done')
 
         self.edit_textbox('Preparing Data (Number of Comments)', 3, 'wait')
+        # dataframes for num_comments
+        self.num_comments_df = self.posts.drop(['ups'], axis=1)
 
-        # generate tfidf - label_binarizer for num_comments
-        self.tfidf_num_comments = self.tfidf.fit_transform(self.posts_num_comments['text'])
-        self.category_num_comments = [self.label_binarizer.fit_transform(self.posts_num_comments[col]) for col in self.categorical_features]
-        self.category_num_comments = np.concatenate(self.category_num_comments, axis=1)
-        self.X_num_comments = hstack([self.tfidf_num_comments, self.category_num_comments])
-        self.y_num_comments = self.posts_num_comments['num_comments']
-
-        # split data into train and test sets
-        self.X_train_num_comments, self.X_test_num_comments, self.y_train_num_comments, self.y_test_num_comments = train_test_split(self.X_num_comments, self.y_num_comments, test_size=0.2, random_state=42)
-
+        # split data into train and test sets for num_comments
+        self.X_train_num_comments, self.X_test_num_comments, self.y_train_num_comments, self.y_test_num_comments = train_test_split(self.X, self.num_comments_df['num_comments'], test_size=0.2, random_state=10)
+        
         self.edit_textbox('Preparing Data (Number of Comments)', 2, 'done')
 
         # train models
@@ -247,6 +237,10 @@ class ModelTrainer(customtkinter.CTkToplevel):
 
             self.edit_textbox('Training {} for Number of Comments'.format(model_name), line_count, 'done')
             line_count += 1
+
+        # dump the vectorizer
+        with open(self.model_dir + 'vectorizer.pkl', 'wb') as f:
+            pickle.dump(self.tfidf, f)
 
         # save the metrics
         with open(self.model_dir + 'ups_metrics.json', 'w') as f:

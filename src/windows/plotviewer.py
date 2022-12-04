@@ -295,7 +295,7 @@ class PlotViewer(customtkinter.CTk):
 
     def predict(self):
         # child window to take input of the post - title, selftext, subreddit, day, hour, distinguished
-        pred_win = Predict(self)
+        pred_win = Predict(self, self.model.get())
         self.wait_window(pred_win)
         
     def train_models(self):

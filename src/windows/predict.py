@@ -1,24 +1,21 @@
-import random
-import math
 import customtkinter
 import tkinter
 import pandas as pd
 import os 
 import pickle
-from scipy.sparse import hstack
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import LabelBinarizer
 from .modeltrainer import preprocess
 import tkinter.messagebox
+import joblib
 
 class Predict(customtkinter.CTkToplevel):
     model_dir = "models/"
-    def __init__(self, parent):
+    def __init__(self, parent, selected_model):
         super().__init__(parent)
         self.parent = parent
         self.title("Predictions")
         self.grab_set()
         self.focus_set()
+        self.selected_model = selected_model
         posx = int(self.winfo_screenwidth()/2 - 150)
         posy = int(self.winfo_screenheight()/2 - 350)
         self.geometry("300x650+{}+{}".format(posx, posy))
@@ -29,6 +26,9 @@ class Predict(customtkinter.CTkToplevel):
         self.title_label.pack(pady=5, padx=30, fill='x', side=tkinter.TOP, anchor='w')
         self.title_entry = customtkinter.CTkEntry(self, width=240)
         self.title_entry.pack(pady=10, padx=10)
+
+        # uncomment the following lines to add title
+
         self.title_entry.insert(0, 'A good openCV tutorial?')
 
         # selftext
@@ -36,6 +36,9 @@ class Predict(customtkinter.CTkToplevel):
         self.selftext_label.pack(pady=5, padx=30, fill='x', side=tkinter.TOP, anchor='w')
         self.selftext_entry = customtkinter.CTkTextbox(self, width=240, height=100)
         self.selftext_entry.pack(pady=10, padx=10)
+
+        # uncomment the following lines to add selftext
+
         self.selftext_entry.insert("0.0", "So I'm learning openCV in python, and now I want as a project to develop some score calculator for a scrabble game. I watched this tutorial from codecamp, and i read about of functionalities of opencv module (such as medianblur, gaussianblur, addweighted, Canny, threshold, and so on), but i still can't grasp it together. Like, i know how to blur an image, to reduce noise let's say, but i don't know when to do that, and especially, why and how much, so I'm searching for a good openCV tutorial that explains these situations. \n As an example, yesterday I did a project where i would've get a sudoku box from an image(by getting the top left, top right, bottom left, bottom right corners of the sudoku box). However, when I tried the same code for the project with the scrabble board, it's a total mess.")
 
         # subreddit
@@ -82,39 +85,40 @@ class Predict(customtkinter.CTkToplevel):
         day = self.day_entry.get()
         hour = self.hour_entry.get()
         hour = int(hour.split(':')[0])
-        distinguished = self.distinguished_entry.get()
+        distinguished = False if self.distinguished_entry.get() == 0 else True
 
         if not title or not selftext or not subreddit or not day or not hour:
             tkinter.messagebox.showerror('Error', 'Please fill all the fields')
             return
 
         # load the model
-        ups_model = pickle.load(open(os.path.join(self.model_dir, "DummyRegressor_ups.pkl"), 'rb'))
-        num_comments_model = pickle.load(open(os.path.join(self.model_dir, "DummyRegressor_num_comments.pkl"), 'rb'))
+        ups_model = pickle.load(open(os.path.join(self.model_dir, self.selected_model + '_ups.pkl'), 'rb'))
+        num_comments_model = pickle.load(open(os.path.join(self.model_dir, self.selected_model + '_num_comments.pkl'), 'rb'))
+
+        # load the vectorizer
+        vectorizer = joblib.load(os.path.join(self.model_dir, "vectorizer.pkl"))
 
         text = title + " " + selftext
         text = preprocess(text)
 
-        post = pd.DataFrame({
-            'text': [text],
-            'subreddit': [subreddit],
-            'day': [day],
-            'hour': [hour],
-            'distinguished': [distinguished]
-        })
+        input_data = pd.DataFrame(columns=['text', 'day', 'hour', 'subreddit', 'distinguished'])
+        input_data = input_data.append({'text': text, 'day': day, 'hour': hour, 'subreddit': subreddit, 'distinguished': distinguished}, ignore_index=True)
 
-        self.tfidf_vectorizer = TfidfVectorizer()
-        self.label_binarizer = LabelBinarizer()
+        cat_cols = ['day', 'hour', 'subreddit', 'distinguished']
+        for col in cat_cols:
+            input_data[col] = input_data[col].astype('category')
+        input_data = pd.get_dummies(input_data, columns=cat_cols)
+        input_data['text'] = input_data['text'].astype(str)
 
-        post_cat = [self.label_binarizer.fit_transform(post[col]) for col in ['subreddit', 'day', 'hour', 'distinguished']]
-        post_text = self.tfidf_vectorizer.fit_transform(post['text'])
-        postX = hstack([post_text] + post_cat).tocsr()
+        X = vectorizer.transform(input_data['text'])
 
-        ups = int(ups_model.predict(postX)[0])
-        num_comments = int(num_comments_model.predict(postX)[0])
+        # predict the ups
+        ups = ups_model.predict(X)
+        ups = int(ups[0])
 
-        # random bias from the prediction
-        ups = int(ups // math.log(ups + 1))
-        num_comments = int(num_comments // math.log(num_comments + 1))
+        # predict the num_comments
+        num_comments = num_comments_model.predict(X)
+        num_comments = int(num_comments[0])
 
-        tkinter.messagebox.showinfo('Predictions', 'Predicted ups: {}\nPredicted num_comments: {}'.format(ups, num_comments))
+        tkinter.messagebox.showinfo('Result', 'Predicted ups: {}\nPredicted num_comments: {}'.format(ups, num_comments))
+
