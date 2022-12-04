@@ -87,7 +87,7 @@ class Predict(customtkinter.CTkToplevel):
         hour = int(hour.split(':')[0])
         distinguished = False if self.distinguished_entry.get() == 0 else True
 
-        if not title or not selftext or not subreddit or not day or not hour:
+        if not title or not selftext:
             tkinter.messagebox.showerror('Error', 'Please fill all the fields')
             return
 
@@ -119,6 +119,27 @@ class Predict(customtkinter.CTkToplevel):
         # predict the num_comments
         num_comments = num_comments_model.predict(X)
         num_comments = int(num_comments[0])
+
+        # Bias for day, hour, subreddit, distinguished, if the user does not post on best time of the day
+        best_time_df = self.parent.posts[['subreddit', 'day', 'hour', 'ups', 'num_comments']].groupby(['subreddit', 'day', 'hour']).sum().reset_index()
+        ups_best_time = best_time_df[(best_time_df['subreddit'] == subreddit) & (best_time_df['day'] == day) & (best_time_df['hour'] == hour)]['ups'].values[0]
+        num_comments_best_time = best_time_df[(best_time_df['subreddit'] == subreddit) & (best_time_df['day'] == day) & (best_time_df['hour'] == hour)]['num_comments'].values[0]
+
+        ups_bias = ups_best_time / ups
+
+        print(ups, ups_bias)
+        num_comments_bias = num_comments_best_time / num_comments
+
+        ups = ups * ups_bias
+        num_comments = num_comments * num_comments_bias
+
+        # distinguished bias
+        if distinguished:
+            ups = ups * 1.5
+            num_comments = num_comments * 1.5
+
+        ups = int(ups)
+        num_comments = int(num_comments)
 
         tkinter.messagebox.showinfo('Result', 'Predicted ups: {}\nPredicted num_comments: {}'.format(ups, num_comments))
 
