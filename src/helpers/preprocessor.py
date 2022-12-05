@@ -62,7 +62,7 @@ class Preprocessor:
         self.df['day'] = self.df['created_utc'].dt.day_name()
         # self.df.drop('created_utc', axis=1, inplace=True)
 
-        cols_to_keep = ['title', 'selftext', 'link_flair_text', 'subreddit', 'ups', 'num_comments', 'hour', 'day', 'distinguished', 'author_premium', 'subreddit_subscribers', 'author', 'score', 'created_utc', 'upvote_ratio']
+        cols_to_keep = ['title', 'selftext', 'link_flair_text', 'subreddit', 'ups', 'num_comments', 'hour', 'day', 'distinguished', 'author_premium', 'subreddit_subscribers', 'author', 'score', 'created_utc', 'upvote_ratio', 'total_awards_received']
         self.df = self.df[cols_to_keep]
 
         # "distinguished" coloumn has 2 values - "moderator" and "" - We can convert this to a boolean column
